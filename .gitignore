@@ -1,38 +1,39 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
-#launch.json folder
-.vscode/
-#Cache folder
-.alcache/
-#Symbols folder
-.alpackages/
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-files
-*.bclicense
-*.flf
-#Test results file
-TestResults.xml
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Obsidian
+.obsidian/
+.trash/
+
+# Copilot
+.copilot/
+copilot/
+
+# Untitled/temp notes
 Untitled/
 "Untitled 1"/
-"Untitles 2"/
+"Untitled 2"/
 Untitled.md
+
+# Underlight
 "Underlight Guide.ms"
 "Underlight Home.md"
-Notion/
+
+# External/aux folders
 Excalidraw/
-copilot/
-"02 Projects"/embedded_software_for_control/
-"02 Projects"/"introduction_to_mcu"/
-"02 Projects"/sensing_and_signal/
-"02 Projects"/"Control System.md"
-"02 Projects"/"STM32 Toolchain Installation.md"
-"91 Attachments"/
+Notion/
+91 Attachments/
+
+# Project-specific ignores
+02 Projects/embedded_software_for_control/
+02 Projects/introduction_to_mcu/
+02 Projects/sensing_and_signal/
+"02 Projects/Control System.md"
+"02 Projects/STM32 Toolchain Installation.md"
+
+# Misc
+*.log
+*.tmp
