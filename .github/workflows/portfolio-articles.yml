@@ -1,0 +1,26 @@
+name: Publish portfolio articles
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: portfolio-articles
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Test exporter
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+      - name: Export Knowledge and Projects
+        run: python3 .github/scripts/export_portfolio_articles.py "$RUNNER_TEMP/portfolio-articles.json"
+      - name: Publish feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/scripts/publish_portfolio_feed.py "$RUNNER_TEMP/portfolio-articles.json"
