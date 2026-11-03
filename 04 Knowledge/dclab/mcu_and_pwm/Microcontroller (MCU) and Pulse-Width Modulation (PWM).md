@@ -174,70 +174,131 @@ Open Arduino IDE, select **Tools > Board > esp32 > ESP32 Dev Module**, and paste
 #include <Arduino.h>
 
 // Hardware pin and LEDC configuration constants
-const uint8_t PWM_OUTPUT_PIN = 18; // Target GPIO output pin
-const uint32_t PWM_FREQUENCY = 20000; // 20 kHz ultrasonic carrier (silent)
-const uint8_t PWM_RESOLUTION = 8; // 8-bit duty resolution (0 - 255 counts)
-const uint8_t LEDC_CHANNEL = 0; // Hardware LEDC channel index 0
+const uint8_t PWM_OUTPUT_PIN = 18;       // GPIO connected to the LED or driver input
+const uint32_t PWM_FREQUENCY = 20000;    // 20 kHz ultrasonic PWM carrier
+const uint8_t PWM_RESOLUTION = 8;        // 8-bit duty resolution: 0-255 counts
+const uint8_t LEDC_CHANNEL = 0;           // Hardware LEDC channel index
 
-// Test duty cycle array: 0%, 25%, 50%, 75%, 100%
-const uint8_t TEST_DUTY_COUNTS[] = {0, 64, 128, 192, 255};
-const uint8_t NUM_TEST_STEPS = sizeof(TEST_DUTY_COUNTS)/sizeof(TEST_DUTY_COUNTS[0]);
+// Non-blocking acceleration ramp timing
+const uint32_t RAMP_INTERVAL_MS = 20;    // Update duty every 20 ms: 50 Hz ramp loop
 
-void setup() {
-	// Initialize USB UART console for debugging
-	Serial.begin(115200);
-	delay(500); // Allow UART hardware buffer to stabilize
-	
-	Serial.println("PWM TEST");
-	
-	// Configure and attach GPIO 18 to LEDC hardware timer
-	bool attach_success = ledcAttachChannel(PWM_OUTPUT_PIN, PWM_FREQUENCY, PWM_RESOLUTION, LEDC_CHANNEL);
-	
-	if (attach_success) {
-		Serial.println("[STATUS] LEDC Initialized Successfully");
-		Serial.printf("Target pin: GPIO %d | Freq: %d Hz | Resolution: %d-bit\n", PWM_OUTPUT_PIN, PWM_FREQUENCY, PWM_RESOLUTION);
-	} else {
-		Serial.println("[FATAL ERROR] Failed to configure LEDC channel");
-		
-		while (true) {
-			delay(1000); // Halt execution if hardware timer allocation fails
-		}
-		
-		Serial.println("Starting 5-step duty cycle test (Hold: 8 seconds per step)...\n");
-	}
+// PWM state variables
+uint8_t current_duty_count = 0;           // Current PWM duty value: 0-255
+int8_t ramp_direction = 1;                // +1 accelerates, -1 decelerates
+
+// Initialize the ESP32 LEDC hardware PWM peripheral
+bool initHardwarePWM() {
+  return ledcAttachChannel(
+    PWM_OUTPUT_PIN,
+    PWM_FREQUENCY,
+    PWM_RESOLUTION,
+    LEDC_CHANNEL
+  );
 }
-	
+
+// Write an 8-bit duty value to the PWM output
+void setHardwarePWM(uint8_t duty_count) {
+  ledcWrite(PWM_OUTPUT_PIN, duty_count);
+}
+
+// Arduino initialization function
+void setup() {
+  // Start the USB serial console for diagnostics
+  Serial.begin(115200);
+  delay(500); // Allow the serial interface to initialize
+
+  // Configure the PWM output pin
+  pinMode(PWM_OUTPUT_PIN, OUTPUT);
+  digitalWrite(PWM_OUTPUT_PIN, LOW);
+
+  Serial.println("PWM DRIVER");
+
+  // Initialize the hardware LEDC PWM peripheral
+  if (!initHardwarePWM()) {
+    Serial.println("[FATAL ERROR] Failed to initialize LEDC hardware");
+
+    // Stop here if PWM initialization fails
+    while (true) {
+      delay(1000);
+    }
+  }
+
+  // Start with the output disabled
+  setHardwarePWM(0);
+
+  Serial.printf(
+    "[STATUS] Hardware LEDC Peripheral Initialized\n"
+    "GPIO Pin: %u\n"
+    "Frequency: %lu Hz\n"
+    "Resolution: %u-bit\n",
+    PWM_OUTPUT_PIN,
+    PWM_FREQUENCY,
+    PWM_RESOLUTION
+  );
+
+  Serial.println("[STATUS] Starting non-blocking acceleration ramp");
+}
+
+// Main Arduino loop
 void loop() {
-	for (uint8_t step = 0; step < NUM_TEST_STEPS; step++) {
-		uint8_t current_duty = TEST_DUTY_COUNTS[step];
-		
-		// Write discrete duty cycle count directly to hardware timer registers
-		ledcWrite(PWM_OUTPUT_PIN, current_duty);
-		
-		// Compute electrical quantities
-		float duty_percentage = ((float)current_duty/255.0f) * 100.0f;
-		float dc_volts = ((float)current_duty/255.0f) * 3.300f;
-		
-		// Debugging
-		Serial.printf("Step %d/%d: Duty Count = %3d/255 | Percentage = %5.1f%%\n", step + 1, NUM_TEST_STEPS, current_duty, duty_percentage);
-		Serial.printf("Calculated DC Voltage: %5.3f V\n", dc_volts);
-		Serial.println(">>> PROBE GPIO 18 WITH MULTIMETER (DC VOLTS MODE) NOW <<<");
-		
-		// Hold for 8 seconds to permit stable multimeter probe contact
-		delay(8000);
-	}
+  // This timestamp allows the loop to remain non-blocking
+  static uint32_t previous_ramp_time_ms = 0;
+
+  const uint32_t current_time_ms = millis();
+
+  // Unsigned subtraction remains correct when millis() rolls over
+  if ((uint32_t)(current_time_ms - previous_ramp_time_ms) >=
+      RAMP_INTERVAL_MS) {
+
+    // Advance on the intended timing grid instead of resetting to current time
+    previous_ramp_time_ms += RAMP_INTERVAL_MS;
+
+    // Apply the current duty value to the hardware PWM peripheral
+    setHardwarePWM(current_duty_count);
+
+    // Reverse direction at the endpoints of the ramp
+    if (current_duty_count == 255) {
+      ramp_direction = -1; // Begin deceleration
+    } else if (current_duty_count == 0) {
+      ramp_direction = 1;  // Begin acceleration
+    }
+
+    // Update the duty count without allowing unsigned underflow
+    current_duty_count = static_cast<uint8_t>(
+      static_cast<int16_t>(current_duty_count) + ramp_direction
+    );
+
+    // Print occasional diagnostic information
+    if ((current_duty_count % 50) == 0) {
+      const float duty_percent =
+        (current_duty_count / 255.0f) * 100.0f;
+
+      // This is the theoretical average voltage at the GPIO pin.
+      // It is not the motor voltage when a motor driver is used.
+      const float average_gpio_voltage =
+        (current_duty_count / 255.0f) * 3.3f;
+
+      Serial.printf(
+        "[DRIVER] Duty: %3u / 255 (%5.1f%%) | "
+        "Theoretical GPIO average: %5.3f V\n",
+        current_duty_count,
+        duty_percent,
+        average_gpio_voltage
+      );
+    }
+  }
 }
 ```
 
 ### Verify data
 
-1. Connect the USB cable to the PC. Open the Arduino Serial Monitor at `115200` baud.
-2. Switch the Multimeter to **DC Voltage Mode ($20 V$ range)**
-3. Firmly clip the Multimeter black probe to the breadboard `GND` rail
-4. Place the Multimeter red probe on the breadboard tie-point connecting `GPIO 18` and the $330 \Omega$ resistor
-5. Compare the reading with the Serial output
+1. Connect the Micro-USB cable from the ESP32 DevKit to the PC. Open the Arduino IDE **Serial Monitor** at `115200` baud. 
+2. Switch the Digital Multimeter (DMM) to **DC Voltage Mode ($20\text{V}$ range)**. 
+3. Firmly clip the Multimeter black probe (COM) to the breadboard **`GND` rail**. 
+4. Place the Multimeter red probe on the breadboard tie-point connecting **`GPIO 18`** and the $330\,\Omega$ resistor. 
+5. Observe the live DMM reading as the non-blocking firmware continuously ramps duty cycle up and down: *As `current_duty_count` ramps smoothly from $0$ to $255$, the DMM internal low-pass filter integrates the $20\text{ kHz}$ PWM pulse train and displays a smooth DC voltage rise from **$0.00\text{V}$ to $3.30\text{V}$** (and back down).* Compare the physical DMM voltage reading in real time with the diagnostic telemetry printed on the Serial Monitor (`Theoretical V_avg`). 
 
-> Measured voltages must track the calculated value $\pm 0.05 V$. Minor deviations stem from USB $5 V$ bus tolerance and internal LDO regulator loading
+>**Note**: Measured DC voltages must track theoretical predictions within $\pm 0.05\text{V}$. Minor deviations stem from USB $5\text{V}$ bus tolerance, onboard $3.3\text{V}$ LDO regulator load, and multimeter internal input impedance loading.
 
 ## Debugging
 

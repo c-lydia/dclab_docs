@@ -1,0 +1,93 @@
+DC LAB / CRASH COURSE SLIDE KIT
+terminal gremlin (c-lydia ^_^)
+
+UPDATED: For directly selectable logos and ALL text, open
+DCLab_Crash_Course_Editable.pptx. See EDITABLE_VERSION.txt. The instructions
+below describe the original master-based version, which is also preserved.
+
+OPEN THIS
+  DCLab_Crash_Course.pptx  — editable layout gallery; duplicate slides to teach.
+  DCLab_Crash_Course.potx  — PowerPoint template; open to start a new deck.
+  DCLab_Crash_Course.pdf   — preview only, not the editable source.
+  preview.jpg             — overview of all 18 layouts.
+
+QUICK START
+1. Open the PPTX in PowerPoint or LibreOffice Impress and Save As a new file.
+2. Duplicate whichever example slide suits your content. Replace bracketed text.
+3. Use the picture-placeholder icon to insert images. Use Crop > Fit for diagrams
+   whose labels must remain visible; Crop > Fill for photographs.
+4. Delete gallery slides you do not need. Each slide's speaker notes explain it.
+5. For new empty slides, choose one of the 18 named layouts in New Slide / Layout.
+   Duplicate the gallery slides to retain the code, chart, nodes or callout markers:
+   those are ordinary editable slide objects, intentionally not fixed backgrounds.
+
+WHAT YOU CAN EDIT
+  Text: ordinary text and title/body placeholders.
+  Images: real picture placeholders, including the cover and QR/logo space.
+  Code: editable text with individually coloured syntax runs; not screenshots.
+  Diagram: native nodes, labels and connectors attached to the nodes.
+  Data: native scatter chart with an embedded workbook; right-click > Edit Data.
+  Equations: simple editable text; use Insert > Equation for advanced notation.
+  Logos / footer: View > Slide Master (Impress: View > Master Slide).
+  Everything in a layout remains editable in the master/layout view.
+  Native PPTX is the primary editing format; no macros, plugins or network needed.
+
+THE 18 LAYOUTS
+01 Cover / hero picture          10 Equation + visual
+02 Session map                   11 Measured data / chart
+03 Chapter / one question        12 Hardware + callouts
+04 Concept + picture             13 Lab / steps + done condition
+05 Large figure + caption        14 Debug / symptom to test
+06 Two pictures / compare        15 Predict / reveal
+07 Code + explanation            16 Recap / next experiment
+08 Code / wide                   17 References + resources
+09 Editable signal path          18 Blank canvas / spare parts
+
+STYLE
+  Light teaching pages: F5F8FF, with 0C0A9E monospace titles.
+  Dark code pages: 1A1B26 / 16161E, with C0CAF5 text.
+  Cyan: observation, signals and file labels. Pink: questions and constraints.
+  Noto Sans Mono: titles, code and small labels. Ubuntu Sans: explanatory text.
+  These fonts are installed on this machine; fonts are not embedded in the deck.
+  On another machine, install them or replace fonts consistently. Practical
+  fallbacks: Consolas or Liberation Mono; Aptos or Liberation Sans for body text.
+  Keep a title to two lines; keep prose short enough to read from the back row.
+  Source style: your MCU PowerPoint, gremlin signature, and Underlight Obsidian
+  colours. The kit uses original editable geometry rather than the stock deck's
+  decorative backgrounds. Original ITC/DC Lab logo artwork is in assets/.
+
+UPDATING SYNTAX COLOURS (OPTIONAL)
+PowerPoint and Impress do not run a syntax highlighter while you type. Existing
+colours stay editable, but newly typed/pasted code inherits nearby formatting.
+Use the helper to recolour a replacement snippet as editable text:
+
+  python build_template.py --highlight My_Course.pptx --slide 7 --shape CODE \
+    --source code_samples/timing.cpp --language cpp --size 15 \
+    --output My_Course_highlighted.pptx
+
+Run this from this folder. Use the current slide number after rearranging slides.
+The code textbox is named CODE in the Selection Pane. Supported language names
+include cpp, c, python, bash, json and yaml (Pygments aliases).
+The helper checks line count and width; split long snippets over multiple slides.
+Slide 7 supports about 12 lines / 58 columns at 15 pt. Slide 8 has more width.
+The helper always requires a separate output file so your source is preserved.
+Keep your real code in source files as well as in the presentation.
+
+REBUILDING THE KIT (OPTIONAL)
+  python -m venv .venv
+  .venv/bin/pip install -r requirements.txt
+  .venv/bin/python build_template.py
+
+The existing local environment can also build it:
+  /home/chheng-lydia/MCU_PWM_work/.venv/bin/python build_template.py
+
+Rebuilding overwrites the kit's PPTX and POTX, so save your course separately.
+The Python source controls layouts, colours, fonts, example content and logos.
+It does not regenerate the PDF or preview image. Use Export as PDF in your editor
+after making changes. Small rendering differences between office apps are normal;
+check line breaks if using substituted fonts.
+
+EXAMPLE CONTENT
+The code is a teaching excerpt, not complete firmware. The scatter chart uses
+illustrative data, not measured results. Picture/QR areas are empty placeholders.
+Replace prompts and examples with your session content before presenting.

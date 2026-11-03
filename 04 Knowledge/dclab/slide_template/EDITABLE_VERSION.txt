@@ -1,0 +1,41 @@
+OPEN: DCLab_Crash_Course_Editable.pptx
+TEMPLATE: DCLab_Crash_Course_Editable.potx
+
+Logos, headings, section labels, footers, signatures, lines and panels are now
+ordinary objects ON EACH SLIDE. Click them in normal editing view. You do not
+need Slide Master to change them.
+
+LOGOS
+Click the actual logo picture to move, resize, delete or replace it.
+In PowerPoint, right-click > Change Picture. In LibreOffice, use Replace on the
+image context menu, or delete it and insert your image. Preserve aspect ratio.
+The white logo backing is a separate editable shape.
+The lettering inside the original logo artwork is part of the image, so replace
+the picture to use a different logo; its pixels are not a text box.
+
+TEXT
+Click any text and type. Titles, small labels, signatures and footers all work
+the same way. You can move the box, resize it, change its font/colour or delete it.
+Use the Selection Pane for tiny or overlapping items. Names begin with TEXT,
+LOGO, SHAPE or PICTURE SLOT; the syntax-coloured code box remains named CODE.
+
+REUSE
+Duplicate a complete slide to preserve the full editable design. The New Slide
+layouts retain only picture-slot geometry; use Duplicate for this version.
+Branding edits affect the current slide. Customize one slide first, then duplicate
+it to keep those changes in subsequent slides. The original master-based files
+are still available if you prefer changing branding centrally across the deck.
+
+PICTURES, DIAGRAMS, CHARTS AND CODE
+The picture-slot icon still inserts images. Diagram nodes/connectors and chart
+data remain editable. The existing syntax-colouring helper also works with this
+deck; see START_HERE.txt for the optional command. Colours do not update
+automatically as you type in PowerPoint or LibreOffice.
+
+BACKGROUND
+Use Format Background / Slide Properties to change a slide's background colour.
+
+REBUILD (OPTIONAL)
+Run build_template.py, then make_directly_editable.py in the same Python environment.
+The second script reads the original PPTX and writes the two _Editable files.
+Save your teaching deck under a separate name before rebuilding.

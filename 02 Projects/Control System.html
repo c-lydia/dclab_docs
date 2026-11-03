@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control System</title>
+<style>
+
+* { margin:0;padding:0;box-sizing:border-box; }
+body { background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;padding:24px;max-width:1000px;margin:0 auto;line-height:1.7; }
+h1 { color:#58a6ff;font-size:28px;margin:32px 0 12px; }
+h2 { color:#f0883e;font-size:22px;margin:28px 0 10px;border-bottom:1px solid #30363d;padding-bottom:8px; }
+h3 { color:#d2a8ff;font-size:17px;margin:24px 0 8px; }
+a { color:#58a6ff;text-decoration:none; }
+a:hover { text-decoration:underline; }
+strong { color:#f0f6fc; }
+code { background:#21262d;padding:2px 6px;border-radius:4px;font-size:.9em;font-family:'SFMono-Regular',Consolas,monospace; }
+pre { background:#161b22;border:1px solid #30363d;border-radius:8px;padding:16px;overflow:auto;margin:12px 0; }
+pre code { background:none;padding:0;border-radius:0; }
+table { width:100%;border-collapse:collapse;margin:12px 0;font-size:14px; }
+th { background:#161b22;color:#8b949e;padding:10px 8px;border-bottom:1px solid #30363d;text-align:left;font-weight:600; }
+td { padding:10px 8px;border-bottom:1px solid #21262d; }
+tr:hover { background:#161b22; }
+ul,ol { margin:8px 0;padding-left:24px; }
+li { margin:4px 0; }
+blockquote { border-left:3px solid #30363d;padding:8px 16px;margin:12px 0;color:#8b949e;background:#161b22;border-radius:0 8px 8px 0; }
+img { max-width:100%;border-radius:8px;margin:12px 0; }
+hr { border:none;border-top:1px solid #30363d;margin:24px 0; }
+p { margin:12px 0; }
+@media (max-width:768px){body{padding:16px;}}
+</style>
+</head>
+<body>
+<h1>Control System</h1>
+<table><thead></thead><tbody>
+<tr><th>Class Location</th><th>DCLab, Meeting room</th></tr>
+<tr><td>Class Hours</td><td>Saturday</td></tr>
+<tr><td>Instructor</td><td>Chheng Lydia</td></tr>
+<tr><td>Office Hours</td><td>N/A</td></tr>
+<tr><td>Email Address</td><td>chhenglydiacl@gmail.com</td></tr>
+<tr><td>Course Website</td><td>N/A</td></tr>
+</tbody></table>
+<h2>Course Description</h2>
+<hr>
+<p>This course is designed to provide a comprehensive introduction to control system. Students will learn the fundamentals of control system, including electronics, microcontroller, communication protocol, PID, manual control, and odometry. The course will primarily use STM32, C/C++, Python, OOP, and ROS 2. By the end of the course, students should be able to control basic robot with gamepad app and solve basic problems with the robot control system code and electronics. </p>
+<p><em>Prerequisite: Mechanics, Circuit Analysis, Arduino and ESP 32 platform, Python, C/C++, OOP, ROS 2</em></p>
+<h2>Textbook and Other Materials</h2>
+<hr>
+<p>All course readings will be available on these platforms:</p>
+<ul><li>GitHub for extra reference:  https://github.com/c-lydia/dclab_docs.git</li></ul>
+<h2>Evaluation</h2>
+<hr>
+<table><thead></thead><tbody>
+<tr><th>Stage</th><th>Description</th></tr>
+<tr><td>Implementation</td><td>Can make it work</td></tr>
+<tr><td>Understanding</td><td>Can derive it and explain it</td></tr>
+<tr><td>Engineering</td><td>Can measure limits, diagnose failures, and improve it</td></tr>
+</tbody></table>
+<h2>Roadmap</h2>
+<hr>
+<p>&lt;!-- Column 1 --&gt;</p>
+<table><thead></thead><tbody>
+<tr><th>Timeline</th><th>Topic</th><th>Category</th></tr>
+<tr><td>Week 1</td><td>Introduction to Electronics and Microcontroller</td><td>Electronics</td></tr>
+<tr><td>Week 2</td><td>Embedded software for control</td><td>Electronics</td></tr>
+<tr><td>Week 3</td><td>Sensing and signals</td><td>Electronics</td></tr>
+<tr><td>Week 4</td><td>Motor drive</td><td>Electronics</td></tr>
+<tr><td>Week 5</td><td>Encoders and speed measurements</td><td>Electronics</td></tr>
+<tr><td>Week 6</td><td>Communication Protocols</td><td>Electronics</td></tr>
+<tr><td>Week 7</td><td>Motor modelling</td><td>Control theory</td></tr>
+<tr><td>Week 8</td><td>PID speed control</td><td>Control theory</td></tr>
+<tr><td>Week 9</td><td>Kinematics</td><td>Control theory</td></tr>
+<tr><td>Week 10</td><td>Odometry</td><td>Control theory</td></tr>
+</tbody></table>
+<p>&lt;!-- Column 2 --&gt;</p>
+<h2>Detail Outline</h2>
+<hr>
+<blockquote>[!note]+ Electronics</blockquote>
+<blockquote>&gt; [!note]+ Introduction to Electronics and Microcontroller</blockquote>
+<blockquote>&gt; - Why we need electronics</blockquote>
+<blockquote>&gt; - Electrical fundamental</blockquote>
+<blockquote>&gt; - Processor, MPU, and MCU</blockquote>
+<blockquote>&gt; - Basic Computer Architecture</blockquote>
+<blockquote>&gt; - Microcontroller platforms</blockquote>
+<blockquote>&gt; - STM32 toolchain</blockquote>
+<blockquote>&gt; - How to use datasheet</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Embedded software for control</blockquote>
+<blockquote>&gt; - C for embedded system</blockquote>
+<blockquote>&gt; - interrupts and polling</blockquote>
+<blockquote>&gt; - Hardware timers</blockquote>
+<blockquote>&gt; - Fixed sample time</blockquote>
+<blockquote>&gt; - UART debugging</blockquote>
+<blockquote>&gt; - Simple state machine</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Sensing and signals</blockquote>
+<blockquote>&gt; - GPIO inputs and debouncing</blockquote>
+<blockquote>&gt; - ADC</blockquote>
+<blockquote>&gt; - Resolution and noise</blockquote>
+<blockquote>&gt; - Sampling and aliasing</blockquote>
+<blockquote>&gt; - moving-average and first-order filters</blockquote>
+<blockquote>&gt; - Battery and current sensing</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Motor drive</blockquote>
+<blockquote>&gt; - DC motor basic</blockquote>
+<blockquote>&gt; - Back-EMF</blockquote>
+<blockquote>&gt; - H-bridge</blockquote>
+<blockquote>&gt; - Direction and PWM</blockquote>
+<blockquote>&gt; - Dead time</blockquote>
+<blockquote>&gt; - Flyback and overcurrent protection</blockquote>
+<blockquote>&gt; - Safe power-up</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Encoders and speed measurements</blockquote>
+<blockquote>&gt; - Quadrature principle</blockquote>
+<blockquote>&gt; - Counts per revolution</blockquote>
+<blockquote>&gt; - Timer encoder mode</blockquote>
+<blockquote>&gt; - Counter wrap-around</blockquote>
+<blockquote>&gt; - Speed from counts</blockquote>
+<blockquote>&gt; - Quantization noise</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Communication Protocol</blockquote>
+<blockquote>&gt; - Serial communication fundamentals</blockquote>
+<blockquote>&gt; - UART</blockquote>
+<blockquote>&gt; - I2C</blockquote>
+<blockquote>&gt; - SPI</blockquote>
+<blockquote>&gt; - CAN</blockquote>
+<blockquote>&gt; - Message framing and packet structure</blockquote>
+<blockquote>&gt; - Data types, byte order, and serialization</blockquote>
+<blockquote>&gt; - Communication timeouts and error handling</blockquote>
+<blockquote>&gt; - Basic protocol debugging and testing</blockquote>
+<blockquote>[!note]+ Control Theory</blockquote>
+<blockquote>&gt; [!note]+ Motor modelling</blockquote>
+<blockquote>&gt; - First-order model</blockquote>
+<blockquote>&gt; - Step response</blockquote>
+<blockquote>&gt; - Gain and time constant</blockquote>
+<blockquote>&gt; - Deadzone</blockquote>
+<blockquote>&gt; - Light laplace review</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ PID speed control</blockquote>
+<blockquote>&gt; - P, I, and D actions</blockquote>
+<blockquote>&gt; - Discretization</blockquote>
+<blockquote>&gt; - Choosing the sample time</blockquote>
+<blockquote>&gt; - Turning</blockquote>
+<blockquote>&gt; - Saturation</blockquote>
+<blockquote>&gt; - Ani-windup</blockquote>
+<blockquote>&gt; - Rate limiting</blockquote>
+<blockquote>&gt; - Feedforward</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Kinematics</blockquote>
+<blockquote>&gt; - Coordinate frames</blockquote>
+<blockquote>&gt; - Wheel radius and track width</blockquote>
+<blockquote>&gt; - v and w to wheel speed and back</blockquote>
+<blockquote>&gt; - Unit conversions</blockquote>
+<blockquote></blockquote>
+<blockquote>&gt; [!note]+ Odometry</blockquote>
+<blockquote>&gt; - Dead reckoning</blockquote>
+<blockquote>&gt; - Distance and heading increments</blockquote>
+<blockquote>&gt; - Midpoint integration</blockquote>
+<blockquote>&gt; - Angle wrapping</blockquote>
+<blockquote>&gt; - Update rate</blockquote>
+<blockquote>&gt; - Floating-point care</blockquote>
+<h2>Projects</h2>
+<hr>
+<ul><li>Week 1: Blink LED, PWM</li><li>Week 2: Time counter</li><li>Week 3: Potentiometer, Battery voltage reading, Filter the noise</li><li>Week 4: Drive motor on open loop</li><li>Week 5: Read encoders; compute wheel speed</li><li>Week 6: Send motor commands over CAN and read feedback from a motor controller</li><li>Week 7: Fit gain and time constant from a measured step response</li><li>Week 8: Speed loop</li><li>Week 9: Drive robot with manual gamepad inputs</li><li>Week 10: Compute pose</li></ul>
+<h2>Resources</h2>
+<hr>
+<ul><li><a href="https://github.com/VaheDanielyan/UsefulBooks/blob/master/Elecia%20White%20-%20O'Reilly%20Making%20Embedded%20Systems%20(2011">UsefulBooks/Elecia White - O'Reilly Making Embedded Systems (2011).pdf at master · VaheDanielyan/UsefulBooks</a>.pdf)</li><li><a href="https://scispace.com/pdf/understanding-and-using-the-controller-area-network-47v9l44cbk.pdf">scispace.com</a></li><li><a href="https://www.cds.caltech.edu/~murray/books/AM05/pdf/am08-complete_22Feb09.pdf">www.cds.caltech.edu</a></li><li><a href="https://modernrobotics.northwestern.edu/nu-gm-book-resource/foundations-of-robot-motion/">Foundations of Robot Motion</a></li><li><a href="https://www.st.com/en/microcontrollers-microprocessors/stm32f103/documentation.html?utm_source=chatgpt.com">STM32F103 - STMicroelectronics</a></li><li><a href="https://www.st.com/resource/en/reference_manual/rm0008-stm32f103xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf">www.st.com</a></li><li><a href="https://www.analog.com/en/resources/app-notes/an-1123.html?utm_source=chatgpt.com">AN-1123: Controller Area Network (CAN) Implementation Guide</a></li><li><a href="https://community.st.com/stm32-mcus-60/guide-to-can-bxcan-can2-0-configuration-in-loop-back-mode-on-stm32-mcus-146788?utm_source=chatgpt.com">Guide to CAN (bxCAN/CAN2.0) configuration in Loop back mode on STM32 MCUs | Community</a></li><li><a href="https://docs.kernel.org/networking/can.html">SocketCAN - Controller Area Network — The Linux Kernel  documentation</a></li><li>https://github.com/linux-can/can-utils</li></ul>
+</body>
+</html>

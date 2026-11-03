@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+ <semantics>
+  <mrow>
+   <mi>T</mi>
+   <mo stretchy="false">=</mo>
+   <mrow>
+    <msub>
+     <mi>T</mi>
+     <mi mathvariant="italic">ON</mi>
+    </msub>
+    <mo stretchy="false">+</mo>
+    <msub>
+     <mi>T</mi>
+     <mi mathvariant="italic">OFF</mi>
+    </msub>
+   </mrow>
+   <mo stretchy="false">=</mo>
+   <mfrac>
+    <mn>1</mn>
+    <msub>
+     <mi>f</mi>
+     <mi mathvariant="italic">PWM</mi>
+    </msub>
+   </mfrac>
+  </mrow>
+  <annotation encoding="StarMath 5.0">T = T_ON + T_OFF = 1 over f_PWM
+</annotation>
+ </semantics>
+</math>

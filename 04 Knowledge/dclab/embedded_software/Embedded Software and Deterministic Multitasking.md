@@ -26,7 +26,7 @@ During this pause, the CPU core is completely monopolized. If a program calls `d
 
 - **Inputs are ignored:** if an operator presses an emergency stop push-button on a GPIO pin, the microcontroller cannot detect the failing edge
 - **Serial buffers overflow:** if an external computer streams commands over UART, the microcontroller fails to read bytes from the hardware receive buffer, leading to buffer overruns and dropped packets
-- **Outputs freezze:** other digital pins cannot toggle, preventing the cconcurrent blinking of status indicators or scheduled polling of peripheral sensors
+- **Outputs freeze:** other digital pins cannot toggle, preventing the cconcurrent blinking of status indicators or scheduled polling of peripheral sensors
 
 ![[monolithic.excalidraw.png]]
 
@@ -42,8 +42,6 @@ In the ESP32 Arduino framework, the internal hardware counter provides two free-
 Instead of halting the processor, the firmware allows the `loop()` function to cycle as fast as possible (often tens of thousands of times per second). On every iteration, the firmware checks whether a target time interval has elapsed by evaluating the mathematical difference $$\Delta t = t_{current} - t_{previous}, \Delta t \ge T_{interval}$$
 - If $\Delta t < T_{interval}$, the task is not ready; the CPU skips the task immediately (in less than $1 \mu s$) and proceeds to check other tasks
 - If $\Delta t \ge T_{interval}$, the interval has elapsed; the CPU executes the task, updates $t_{previous}$, and continues cycling
-
-![[non_blocking_loop.excalidraw.png]]
 
 ### Periodic Scheduling: Relative Reset and Absolute Grid Anchoring
 
@@ -156,24 +154,31 @@ In cooperative multitasking:
 
 - There is no underlying OS kernel pausing or preempt running functions
 - Each task is structured as a quick, non-blocking function that executes its work and immediately returns control to the main loop
-- The system relies on each task being well-behaved (nno single task may hog the CPU or execute long delays)
+- The system relies on each task being well-behaved (no single task may hog the CPU or execute long delays)
 
+#### Cooperative Non-Blocking Task Cycle
+
+![[non_blocking_loop.excalidraw.png]]
+
+> 1. Every task function must execute and return in a fraction of its total period ($T_{\text{exec}} \ll T_{\text{period}}$)
+> 2. Never call `delay()` or long blocking `while()` loops inside any periodic task
 ### Structuring Multi-Rate Periodic Tasks in C++
 
-#### High-Frequency Task ($100 Hz/10 ms$ Period)
+To keep firmware clean, modular, and easy to maintain inside a single `.ino` file, tasks can be encapsulated using a lightweight helper struct:
 
-- Dediacted to fast computations, data collection, or time-sensitive state checks
-- Execution budget: $< 1.0 ms$ (10% CPU utilization)
+```cpp
+struct PeriodicTask {
+    uint32_t last_us = 0;
+    const uint32_t period_us;
+    PeriodicTask(uint32_t us) : period_us(us) {}
 
-#### Medium-Frequency Task ($10 Hz/1,00 ms$ Period)
-
-- Dedicated to formatting and transmitting telemetry packets over the derial interface
-- Execution budget: $<5.0 ms$
-
-#### Low-Frequency Task ($1 Hz/1,000 ms$ Period)
-
-- Dedicated to user interface (UI) updates, visual heartbeat LED toggles, and system sanity checks
-- Execution budget: $< 1.0 ms$
+    bool is_ready(uint32_t now_us) {
+        if ((uint32_t)(now_us - last_us) < period_us) return false;
+        last_us += period_us;
+        return true;
+    }
+};
+```
 
 ### Compute, I/O (Input/Output), and Testing
 
@@ -300,7 +305,7 @@ High-speed computation and serial transmission cause dynamic current draw transi
 
 > Probe between the ESP32 `3V3` pin and `GND` using the Multimeter in DC Voltage Mode while the multi-rate sketch is running. Confim that that voltage remains stable without dips
 
-## Implementation: UART
+## Implementation: Task Scheduler
 
 ![[led.PNG]]
 
@@ -318,122 +323,228 @@ Open Arduino IDE, configure the board as **ESP32 Dev Module**, and upload this f
 ```cpp
 #include <Arduino.h>
 
-// Hardware Pin Assignment
-const uint8_t PIN_HEARTBEAT_LED = 18; // GPIO 18: Heartbeat Indicator
-const uint8_t PIN_UART_TX = 1; // GPIO 1: UART0 TX
+// Hardware pin and LEDC configuration constants
+const uint8_t PWM_OUTPUT_PIN = 18;       // PWM output pin
+const uint8_t PIN_HEARTBEAT_LED = 4;     // Dedicated status LED pin
 
-// Task Scheduling Intervals
-const uint32_t INTERVAL_FAST_TASK_US = 10000; // 10 ms = 10,000 us (100 Hz)
-const uint32_t INTERVAL_TELEMETRY_MS = 100; // 100 ms (10 Hz)
-const uint32_t INTERVAL_HEARTBEAT_MS = 1000; // 1000 ms (1 Hz)
+const uint32_t PWM_FREQUENCY = 20000;    // 20 kHz ultrasonic PWM carrier
+const uint8_t PWM_RESOLUTION = 8;        // 8-bit duty resolution: 0-255
+const uint8_t LEDC_CHANNEL = 0;          // Hardware LEDC channel index
 
-// Scheduling Timestamps
-uint32_t prev_fast_time = 0;
-uint32_t prev_telemetry_time = 0;
-uint32_t prev_heartbeat_time = 0;
+// Scheduler timing intervals
+const uint32_t INTERVAL_CORE_LOOP_US = 10000; // 10 ms: 100 Hz motion task
+const uint32_t INTERVAL_TELEMETRY_MS = 100;   // 100 ms: 10 Hz telemetry task
+const uint32_t INTERVAL_HEARTBEAT_MS = 1000;  // 1 s: 1 Hz heartbeat task
 
-// Performance Profiling
-uint32_t loop_execution_time = 0; // Duration of the 100 Hz compute task
-uint32_t loop_jitter = 0; // Deviation from nominal 10,000 us period
-uint32_t max_execution_time = 0; // Peak execution duration
-uint32_t total_cycles_executed = 0; // Total 100 Hz task iterations
-bool heartbeat_state = false; // Heartbeat LED toggle state
+// Scheduling epochs
+uint32_t last_core_loop_time_us = 0;
+uint32_t last_telemetry_time_ms = 0;
+uint32_t last_heartbeat_time_ms = 0;
 
-// Syntehtic workload variables
-float synthetic_waveform = 0.0f;
-float waveform_phase = 0.0f;
+// Performance metrics
+uint32_t loop_execution_time_us = 0;     // Most recent motion-task duration
+uint32_t max_execution_time_us = 0;      // Worst observed motion-task duration
+int32_t loop_jitter_us = 0;              // Deviation from the nominal 10 ms period
 
-void setup() {
-	// Initialize output pin
-	pinMode(PIN_HEARTBEAT_LED, OUTPUT);
-	digitalWrite(PIN_HEARTBEAT_LED, LOW);
-	
-	// Initialize high-speed UART interface
-	Serial.begin(115200);
-	delay(500); // Allow hardware serial buffer to stabilize
-	
-	Serial.println("UART");
-	
-	// Initial timing epochs
-	uint32_t now_us = micros();
-	uint32_t now_ms = millis();
-	
-	prev_fast_time = now_us;
-	prev_telemetry_time = now_ms;
-	prev_heartbeat_time = now_ms;
+// PWM state variables
+uint8_t current_duty_count = 0;          // Current duty value: 0-255
+int8_t ramp_direction = 1;               // +1 accelerates, -1 decelerates
+
+// Heartbeat LED state
+bool heartbeat_state = false;
+
+// Initialize the ESP32 LEDC hardware PWM peripheral
+bool initHardwarePWM() {
+  return ledcAttachChannel(
+    PWM_OUTPUT_PIN,
+    PWM_FREQUENCY,
+    PWM_RESOLUTION,
+    LEDC_CHANNEL
+  );
 }
 
+// Write an 8-bit duty value to the PWM output
+void setHardwarePWM(uint8_t duty_count) {
+  ledcWrite(PWM_OUTPUT_PIN, duty_count);
+}
+
+// Core motion-control task.
+// This task is called at 100 Hz and must remain short and non-blocking.
+void task_motion_control() {
+  const uint32_t execution_start_us = micros();
+
+  // Apply the current PWM value to the hardware peripheral
+  setHardwarePWM(current_duty_count);
+
+  // Reverse the ramp at the upper and lower limits
+  if (current_duty_count == 255) {
+    ramp_direction = -1; // Begin deceleration
+  } else if (current_duty_count == 0) {
+    ramp_direction = 1;  // Begin acceleration
+  }
+
+  // Update the duty value safely
+  current_duty_count = static_cast<uint8_t>(
+    static_cast<int16_t>(current_duty_count) + ramp_direction
+  );
+
+  // Measure the execution time of this task
+  loop_execution_time_us = micros() - execution_start_us;
+
+  // Track the worst observed execution time
+  if (loop_execution_time_us > max_execution_time_us) {
+    max_execution_time_us = loop_execution_time_us;
+  }
+}
+
+// Telemetry task.
+// This task is intentionally slower than the motion task so serial output
+// does not interfere with high-frequency control work.
+void task_telemetry() {
+  const float duty_percent =
+    (current_duty_count / 255.0f) * 100.0f;
+
+  // This is the theoretical average voltage on the GPIO pin.
+  // It is not the actual motor voltage after an H-bridge driver.
+  const float theoretical_voltage =
+    (current_duty_count / 255.0f) * 3.3f;
+
+  // Serial.printf() is required because Serial.println() does not
+  // interpret printf-style format arguments.
+  Serial.printf(
+    "PWM_Duty: %u, Duty_pct: %.1f, Theoretical_V: %.3f, "
+    "ExecTime_us: %lu, MaxExec_us: %lu, Jitter_us: %ld\n",
+    current_duty_count,
+    duty_percent,
+    theoretical_voltage,
+    loop_execution_time_us,
+    max_execution_time_us,
+    loop_jitter_us
+  );
+}
+
+// Heartbeat task.
+// This task runs once per second and toggles a dedicated LED.
+void task_heartbeat() {
+  heartbeat_state = !heartbeat_state;
+
+  digitalWrite(
+    PIN_HEARTBEAT_LED,
+    heartbeat_state ? HIGH : LOW
+  );
+}
+
+// Arduino initialization function
+void setup() {
+  // Configure GPIO pins
+  pinMode(PWM_OUTPUT_PIN, OUTPUT);
+  pinMode(PIN_HEARTBEAT_LED, OUTPUT);
+
+  digitalWrite(PWM_OUTPUT_PIN, LOW);
+  digitalWrite(PIN_HEARTBEAT_LED, LOW);
+
+  // Initialize the USB serial console
+  Serial.begin(115200);
+  delay(500); // Allow the serial interface to initialize
+
+  Serial.println("SCHEDULER");
+
+  // Initialize the hardware PWM peripheral
+  if (!initHardwarePWM()) {
+    Serial.println("[FATAL ERROR] Failed to initialize LEDC hardware");
+
+    // Stop here if PWM initialization fails
+    while (true) {
+      delay(1000);
+    }
+  }
+
+  // Ensure the PWM output starts at zero duty
+  setHardwarePWM(0);
+
+  Serial.printf(
+    "[STATUS] Hardware LEDC Peripheral Initialized\n"
+    "GPIO Pin: %u\n"
+    "Frequency: %lu Hz\n"
+    "Resolution: %u-bit\n",
+    PWM_OUTPUT_PIN,
+    PWM_FREQUENCY,
+    PWM_RESOLUTION
+  );
+
+  // Initialize all scheduler epochs from the same time reference
+  const uint32_t start_time_us = micros();
+  const uint32_t start_time_ms = millis();
+
+  last_core_loop_time_us = start_time_us;
+  last_telemetry_time_ms = start_time_ms;
+  last_heartbeat_time_ms = start_time_ms;
+
+  Serial.println("[STATUS] Non-blocking scheduler started");
+}
+
+// Main Arduino loop.
+// Each task is checked independently and returns quickly.
 void loop() {
-	uint32_t current_time_us = micros();
-	uint32_t current_time_ms = millis();
-	
-	// High-speed Compute Taks (100 Hz/10 ms)
-	if ((uint32_t)(current_time_us - prev_fast_time) >= INTERVAL_FAST_TASK_US) {
-		// Measure period and calculate jitter relative to 10,000 us
-		uint32_t actual_period_us = current_time_us - last_fast_time;
-		loop_jitter = (uint32_t)actual_period_us - (int32_t)INTERVAL_FAST_TASK_US;
-		
-		// Advance schedule anchor using absolute grid method (prevent drift)
-		last_fast_time += INTERVAL_FAST_TASK_US;
-		total_cycles_executed++;
-		
-		// Task execution duration
-		uint32_t start_benchmark_us = micros();
-		
-		// Generate Synthetic waveform
-		waveform_phase += 0.05f;
-		if (waveform_phase > 6.283185f) {
-			wavefomr_phase -= 6.283185f;
-		}
-		
-		synthetic_waveform = 50.0f + (30.0f * sinf(waveform_phase));
-		
-		// Record execution duration
-		loop_execution_time = micros() - start_benchmark_us;
-		
-		if (loop_execution_time > max_execution_time) {
-			max_execution_time = loop_execution_time;
-		}
-	}
-	
-	// Telemetry Dispatcher (10 Hz/100 ms)
-	if ((uint32_t)(current_time_ms - prev_telemetry_time) >= INTERVAL_TELEMETRY_MS) {
-		prev_telemetry_time += INTERVAL_TELEMETRY_MS;
-		
-		// Output structured key-value packet for Arduino Serial plotter
-		// Format: Label: Value, Lebel: Value
-		Serial.printf("Waveform: %.2f, ExecTime_us: %lu, MaxExec_us: %lu, Jitter_us: %d\n", synthetic_waveform, loop_execution_time, max_execution_time, loop_jitter);
-	}
-	
-	// System Heartbeat and Health Monitor ( 1Hz/1000 ms)
-	if ((uint32_t)(current_time_ms - prev_heartbeat_time) >= INTERVAL_HEARTBEAT_MS) {
-		prev_heartbeat_time += INTERVAL_HEARTBEAT_MS;
-		
-		// Toggle LED state
-		heartbeat_state = !heartbeat_state;
-		
-		if (heartbeat_state) {
-			digitalWrite(PIN_HEARTBEAT_LED, HIGH);
-		} else {
-			digitalWrite(PIN_HEARTBEAT_LED, LOW);
-		}
-	}
+  const uint32_t current_time_us = micros();
+  const uint32_t current_time_ms = millis();
+
+  // 100 Hz motion-control task
+  if ((uint32_t)(current_time_us - last_core_loop_time_us) >=
+      INTERVAL_CORE_LOOP_US) {
+
+    // Measure the actual time since the previous scheduled slot
+    const uint32_t actual_period_us =
+      current_time_us - last_core_loop_time_us;
+
+    // Jitter is the difference from the nominal 10 ms period
+    loop_jitter_us =
+      static_cast<int32_t>(actual_period_us) -
+      static_cast<int32_t>(INTERVAL_CORE_LOOP_US);
+
+    // Preserve the absolute scheduling grid.
+    // Unsigned arithmetic also handles micros() rollover correctly.
+    last_core_loop_time_us += INTERVAL_CORE_LOOP_US;
+
+    task_motion_control();
+  }
+
+  // 10 Hz telemetry task
+  if ((uint32_t)(current_time_ms - last_telemetry_time_ms) >=
+      INTERVAL_TELEMETRY_MS) {
+
+    // Preserve the absolute scheduling grid
+    last_telemetry_time_ms += INTERVAL_TELEMETRY_MS;
+
+    task_telemetry();
+  }
+
+  // 1 Hz heartbeat task
+  if ((uint32_t)(current_time_ms - last_heartbeat_time_ms) >=
+      INTERVAL_HEARTBEAT_MS) {
+
+    // Preserve the absolute scheduling grid
+    last_heartbeat_time_ms += INTERVAL_HEARTBEAT_MS;
+
+    task_heartbeat();
+  }
 }
 ```
 
 ### Test
 
-1. Upload the sketch to the ESP32
-2. Open the **Arduino Serial Monitor** (`115200` baud). Confirm clean line of telemetry outputting exactly 10 times per second ($10 Hz$)
-3. Open **Tool > Serial Plotter** (`Ctrl` + `Shift` + `L`). Verify that 4 distinct curves appear:
-	- **Waveform:** a smooth, continuous sine wave
-	- **ExecTime_us:** baseline compute time (typically $2 \mu s$ to $15 \mu s$)
-	- **MaxExec_us:** peak recorded compute time
-	- **Jitter_us:** variation around the nominal $10,000\mu s$ period (typically, $< \pm 50 \mu s$)
-4. Switch the Multimeter to **DC Voltage Mode ($20 V$ range)**:
-	- Probe GPIO 18 (heartbeat LED), the voltage should alternate cleanly between $0.00 V$ and $3.3 V$ once per second ($1 Hz$)
-	- Probe GPIO 1 (TX Pin) to measure resting voltage during active $10 Hz$ telemetry, the meter should display betwee **$3.15 V$ and $3.28 V$**, confirming brief logic transitions during transmission
-	- Probe `3V3` rail, confirm that the voltage regulator holds between $3.25 V$ and $3.35 V$
+1. Upload `robot_main.ino` to the ESP32.
+2. Open the **Arduino Serial Monitor** (`115200` baud). Confirm clean lines of telemetry outputting exactly 10 times per second ($10\text{ Hz}$).
+3. Open **Tools > Serial Plotter** (`Ctrl` + `Shift` + `L`). Verify that 4 distinct curves appear: 
+	- **`PWM_Duty`**: A smooth triangle wave ramping continuously between $0$ and $255$ counts  
+	- **`Theoretical_V`**: Theoretical average output voltage rising and falling smoothly between $0.00\text{V}$ and $3.30\text{V}$.
+	* **`ExecTime_us`**: Baseline compute time of the 100 Hz task (typically $2\,\mu\text{s}$ to $15\,\mu\text{s}$). 
+	* *`Jitter_us`**: Variation around the nominal $10,000\,\mu\text{s}$ period (typically $< \pm 50\,\mu\text{s}$).
+4. Switch the Multimeter to **DC Voltage Mode ($20\text{V}$ range)**: 
+	* **Probe GPIO 18 (PWM Output / Test Pin)**: As `PWM_Duty` ramps, the DMM internal low-pass filter integrates the $20\text{ kHz}$ pulse train, displaying a smooth DC voltage rise from **$0.00\text{V}$ to $3.30\text{V}$** (and back down), tracking `Theoretical_V` within $\pm 0.05\text{V}$. 
+	-  **Probe GPIO 2 / GPIO 18 (Heartbeat LED)**: The voltage alternates cleanly between $0.00\text{V}$ and $3.30\text{V}$ once per second ($1\text{ Hz}$).
+	- **Probe GPIO 1 (TX Pin)**: Measure resting voltage during active $10\text{ Hz}$ telemetry stream; the meter should display between **$3.15\text{V}$ and $3.28\text{V}$**, confirming brief logic transitions during transmission. 
+	- **Probe `3V3` Rail**: Confirm that the voltage regulator holds rock-solid between $3.25\text{V}$ and $3.35\text{V}$
 
 ### Debugging
 
