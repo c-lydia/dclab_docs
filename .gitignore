@@ -38,3 +38,21 @@ Notion/
 # Misc
 *.log
 *.tmp
+
+.underlight-sync.json
+
+.underlight-backups/
+
+.underlight-sync.lock
+
+.underlight-conflicts.json
+
+.underlight-assets.json
+
+.underlight-sync-config.json
+
+.underlight-asset-skips.json
+
+# Nested repair and history repositories
+/04 Knowledge/.underlight-repair/
+/04 Knowledge/dclab/schematic_main/.history/

@@ -1,4 +1,5 @@
-By: >_ terminal gremlin (c-lydia ^-^)
+By: >_ terminal gremlin (c-lydia ^-^)  
+Chheng Lydiya
 
 On a desktop operating system, the kernel's preemptive scheduler transparently balances hundreds of background processes. On microcontroller, the CPU executes exactlu what is told, sequentially and without intervention.
 

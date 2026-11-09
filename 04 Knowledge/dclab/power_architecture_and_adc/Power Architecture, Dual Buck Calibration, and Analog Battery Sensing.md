@@ -1,5 +1,6 @@
 
-By: >_ terminal gremlin (c-lydia^-^)
+By: >_ terminal gremlin (c-lydia^-^)  
+Chheng Lydiya
 
 ## Power Architecture and Dual-Rail Isolation
 

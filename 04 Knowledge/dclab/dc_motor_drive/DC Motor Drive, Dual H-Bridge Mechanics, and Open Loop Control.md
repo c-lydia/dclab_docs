@@ -1,5 +1,6 @@
 
-By: >_ terminal_gremlin (c-lydia^-^)
+By: >_ terminal_gremlin (c-lydia^-^)  
+Chheng Lydiya
 
 ## Introduction to Control System and Open-Loop Motion Framework
 
@@ -15,17 +16,18 @@ The operation of any robotic control system is defined across four foundational 
 
 The plant is constantly subjected to **external load disturbances ($d(t)$)**; unpredictable physical forces such as ground surface friction variations, mechanical gearbox cogging, chassis weight distribution shifts, and supply battery voltage sags; that pull the actual system output away from the intended reference command.
 
+![[control_system_block.excalidraw.png]]
 ### Open-Loop Control Architecture and Operating Principles
 
 An **Open-Loop Controller** (also referred to as a non-feedback or feed-forward controller) generates its control output $u(t)$ purely as a direct function of the input reference command $r(t)$, wtihout utilizing real-time measurements of the actual plant output $y(t)$. The fundamental mathematical formulation of open-loop control is expressed as $$u(t) = f[r(t)]$$
 In an open-loop motor speed control framework: 
 
-- The firmwatr maps a requested speed reference directly to an 8-but Pulse-Width Modulation (PWM) duty cycle count ($0 - 255$)
+- The firmware maps a requested speed reference directly to an 8-but Pulse-Width Modulation (PWM) duty cycle count ($0 - 255$)
 - The microcontroller applies this fixed duty cycle to the H-bridge driver stage
 - The system assumes that applying a given voltage $V_{avg} = D \cdot V_{supply}$ will reliably produce a corresponding shaft speed $\omega$
 - The controller contains **no feedback loop**; it does not query hardware sensors (such as quadrature optical encoders or hall-effect sensors) to measure whether the motor is actually spinning at the requested speed or even spinning at all
 
-### Open-Loop and Closed-Loop Control Trade-Odd Analysis
+### Open-Loop and Closed-Loop Control Trade-Off Analysis
 
 Open-loop control is simple and computationally lightweight, but its inability ti sense or correct for environmental disturbances limits its precision in mobile robots. Closed-loop control can dynamically adjust control signals based on real-time feedback error $e(t) = r(t) - y(t)$.
 
@@ -60,6 +62,7 @@ In steady-state DC operation ($\frac{dI}{dt} = 0$), the inductive voltage drop d
 
 - **No-Load Speed ($\omega_{0}$):** the maximum theoretical angular speed achieved when zero external load torque is applied ($\tau = 0$). In this state, the generated back-EMF voltage matches the applied terminal voltage ($k_{e}\omega_{0} \approx V_{app}$), reducing net current draw to the minimal no-load baseline $$\omega_{0} = \frac{V_{app}}{k_{t}}$$
 - **Stall Torque ($\tau_{stall}$):** the maximum torque generated when the motor shaft is locked motionless ($\omega = 0$). With zero back-EMF generated, the current is constrained solely by the winding DC resistance, producing the pead stall current $T_{stall} = \frac{V_{app}}{R_{a}}$ and the corresponding stall torque $$\tau_{stall} = k_{t} \cdot I_{stall} = k_{t} \cdot \frac{V_{app}}{R_{a}}$$
+![[dc_motor_speed_torque_curve.png]]
 
 ### Inductive Back-EMF Spikes and Flyback Protection
 
@@ -78,7 +81,17 @@ A modern solid-state H-bridge consists of four N-channel or P-channel Power MOSF
 - **High-side MOSFETs ($Q_{1}, Q_{3}$):** connected between the motor supply rail $V_{M}$ and the output terminals ($OUT1, OUT2$)
 - **Low-side MOSFETs ($Q_{2}, Q_{4}$):** connected between the output terminals ($OUT1, OUT2$) and system $GND$
 
+![[h_brdige.webp]]
+
 By selectively driving the gate terminals of $Q_{1}, Q_{2}, Q_{3}$ and $Q_{4}$, current can be routed through the central motor armature in either direction, enabling forward rotation, reverse rotation, active braking, or passive coasting.
+
+
+| Switching State   | High-Side $Q_{1}$ | Low-Side $Q_{2}$ | High-Side $Q_{3}$ | Low-Side $Q_{4}$ | Voltage across Motor ($V_{OUT1} - V_{OUT2}$) | Motor Operational State               |
+| ----------------- | ----------------- | ---------------- | ----------------- | ---------------- | -------------------------------------------- | ------------------------------------- |
+| Forward Drive     | ON                | OFF              | OFF               | ON               | $+V_{M} (+6V)$                               | Shaft rotates cockwise (CW)           |
+| Reverse Drive     | OFF               | ON               | ON                | OFF              | $- V_{M} (-6 V)$                             | Shaft rotates counter-clockwise (CCW) |
+| Fast Decay Brake  | OFF               | ON               | OFF               | ON               | $0 V$ (short to GND)                         | Active Dynamic Braking                |
+| Slow Decay Cooast | OFF               | OFF              | OFF               | OFF              | Floating High-Z                              | Passive Inertial Coast                |
 
 ### Operational Switching Modes and Decay Dynamics (Fast and Slow Decay)
 
@@ -92,6 +105,8 @@ When modulating motor speed using Pulse-Width Modulation (PWM), the driver switc
 ### Shoot-Through Short Circuits and Hardware or Software Dead-Time Insertion
 
 A critical danger inherent to H-bridge inverter bridges is a **shoot-through short circuit** (also know as cross-condution). Shoot-through occurs when both the high-side switch ($Q_{1}$) and the low-side switch ($Q_{2}$) in the same vertical leg are turned ON at the exact same time.
+
+![[shoot_through.gif]]
 
 When shoot-through occurs, the high-voltage supply rail $V_{M}$ is connected directly to system $GND$ through the internal on-resistance of the two MOSFETs ($R_{ds(on)} \approx 0.1\Omega$). The resulting short-circuit current spike instantly exceeds $100 A$, causing explosive thermal destruction of the MOSFET silicon within microseconds.
 
@@ -109,5 +124,290 @@ The robot platform uses for GA N20 $5 V 300 RPM$ micro metal gearmotors. To cont
 - **Left Motor Pair (Front Left + Rear Left):** wired in parallel to Driver Channel A (`OUT1` and `OUT2`)
 - **Right Motor Pair (Front Right + Rear Right):** wire in parallel to Driver Channel B (`OUT3` and `OUT4`)
 
+![[schematic.png]]
+
 ### Firmware
 
+```cpp
+#include <Arduino.h>
+
+// Motor Driver Channel A (Left Pair: Front Left + Rear Left Parallel)
+const uint8_t PIN_PWMA = 18;          // Hardware PWM speed control
+const uint8_t PIN_AIN1 = 25;          // Direction control logic 1
+const uint8_t PIN_AIN2 = 27;          // Direction control logic 2
+
+// Motor Driver Channel B (Right Pair: Front Right + Rear Right Parallel)
+const uint8_t PIN_PWMB = 19;          // Hardware PWM speed control
+const uint8_t PIN_BIN1 = 26;          // Direction control logic 1
+const uint8_t PIN_BIN2 = 33;          // Direction control logic 2
+
+// Driver Global Controls & Diagnostics
+const uint8_t PIN_STBY = 5;           // Active-HIGH driver enable (Standby)
+const uint8_t PIN_HEARTBEAT_LED = 4;   // 1 Hz heartbeat status LED
+const uint8_t PIN_BATTERY_ADC = 32;    // Analog battery voltage divider input
+
+// Hardware PWM Configuration (LEDC Peripheral)
+const uint32_t PWM_FREQUENCY = 20000;  // 20 kHz ultrasonic PWM carrier frequency
+const uint8_t PWM_RESOLUTION = 8;      // 8-bit duty resolution (0 - 255 counts)
+const uint8_t LEDC_CHANNEL_LEFT = 0;   // Hardware LEDC channel index 0
+const uint8_t LEDC_CHANNEL_RIGHT = 1;  // Hardware LEDC channel index 1
+
+// ADC & Battery Sensing Calibration
+const float ADC_REF_VOLTAGE = 3.30f;   // ESP32 ADC reference voltage
+const float ADC_MAX_COUNTS = 4095.0f;  // 12-bit ADC full-scale counts
+const float R1_KOHM = 100.0f;          // Upper divider resistor (100 kΩ)
+const float R2_KOHM = 22.0f;           // Lower divider resistor (22 kΩ)
+const float VOLTAGE_DIVIDER_RATIO = (R1_KOHM + R2_KOHM) / R2_KOHM; // K_inv = 5.545455
+
+// Scheduler Timing Intervals
+const uint32_t INTERVAL_MOTION_US = 10000;   // 10 ms: 100 Hz core control loop
+const uint32_t INTERVAL_TELEMETRY_MS = 100;  // 100 ms: 10 Hz telemetry loop
+const uint32_t INTERVAL_HEARTBEAT_MS = 1000; // 1 s: 1 Hz heartbeat status loop
+
+uint32_t last_motion_time_us = 0;
+uint32_t last_telemetry_time_ms = 0;
+uint32_t last_heartbeat_time_ms = 0;
+
+// Motor Duty Cycles & Directions
+int16_t left_command_duty = 0;        // Target left duty (-255 to +255)
+int16_t right_command_duty = 0;       // Target right duty (-255 to +255)
+bool driver_enabled = false;          // Standby status flag
+
+// Battery Telemetry State
+float filtered_battery_voltage = 12.0f; // Low-pass filtered voltage
+
+// Heartbeat LED State
+bool heartbeat_state = false;
+
+bool initMotorDriver() {
+  // Configure Direction & Standby Control Pins as Digital Outputs
+  pinMode(PIN_AIN1, OUTPUT);
+  pinMode(PIN_AIN2, OUTPUT);
+  pinMode(PIN_BIN1, OUTPUT);
+  pinMode(PIN_BIN2, OUTPUT);
+  pinMode(PIN_STBY, OUTPUT);
+
+  // Assert initial safe state: Driver disabled (Standby LOW)
+  digitalWrite(PIN_STBY, LOW);
+  digitalWrite(PIN_AIN1, LOW);
+  digitalWrite(PIN_AIN2, LOW);
+  digitalWrite(PIN_BIN1, LOW);
+  digitalWrite(PIN_BIN2, LOW);
+
+  // Attach LEDC PWM channels to output pins
+  bool left_pwm_ok = ledcAttachChannel(PIN_PWMA, PWM_FREQUENCY, PWM_RESOLUTION, LEDC_CHANNEL_LEFT);
+  bool right_pwm_ok = ledcAttachChannel(PIN_PWMB, PWM_FREQUENCY, PWM_RESOLUTION, LEDC_CHANNEL_RIGHT);
+
+  if (!left_pwm_ok || !right_pwm_ok) {
+    return false;
+  }
+
+  // Set initial duty cycles to zero
+  ledcWrite(PIN_PWMA, 0);
+  ledcWrite(PIN_PWMB, 0);
+
+  // Enable the driver by bringing STBY HIGH
+  digitalWrite(PIN_STBY, HIGH);
+  driver_enabled = true;
+
+  return true;
+}
+
+// Low-level Channel A (Left Motor Pair) Drive Function
+void setLeftMotorSpeed(int16_t duty_count) {
+  // Constrain duty count to valid [-255, +255] range
+  duty_count = constrain(duty_count, -255, 255);
+
+  if (duty_count > 0) {
+    // Forward Drive
+    digitalWrite(PIN_AIN1, HIGH);
+    digitalWrite(PIN_AIN2, LOW);
+    ledcWrite(PIN_PWMA, static_cast<uint8_t>(duty_count));
+  } else if (duty_count < 0) {
+    // Reverse Drive
+    digitalWrite(PIN_AIN1, LOW);
+    digitalWrite(PIN_AIN2, HIGH);
+    ledcWrite(PIN_PWMA, static_cast<uint8_t>(-duty_count));
+  } else {
+    // Active Brake Mode (Fast Decay)
+    digitalWrite(PIN_AIN1, LOW);
+    digitalWrite(PIN_AIN2, LOW);
+    ledcWrite(PIN_PWMA, 0);
+  }
+}
+
+// Low-level Channel B (Right Motor Pair) Drive Function
+void setRightMotorSpeed(int16_t duty_count) {
+  duty_count = constrain(duty_count, -255, 255);
+
+  if (duty_count > 0) {
+    // Forward Drive
+    digitalWrite(PIN_BIN1, HIGH);
+    digitalWrite(PIN_BIN2, LOW);
+    ledcWrite(PIN_PWMB, static_cast<uint8_t>(duty_count));
+  } else if (duty_count < 0) {
+    // Reverse Drive
+    digitalWrite(PIN_BIN1, LOW);
+    digitalWrite(PIN_BIN2, HIGH);
+    ledcWrite(PIN_PWMB, static_cast<uint8_t>(-duty_count));
+  } else {
+    // Active Brake Mode (Fast Decay)
+    digitalWrite(PIN_BIN1, LOW);
+    digitalWrite(PIN_BIN2, LOW);
+    ledcWrite(PIN_PWMB, 0);
+  }
+}
+
+// High-Level Open-Loop Chassis Drive Function
+void driveRobot(int16_t left_duty, int16_t right_duty) {
+  left_command_duty = left_duty;
+  right_command_duty = right_duty;
+  setLeftMotorSpeed(left_command_duty);
+  setRightMotorSpeed(right_command_duty);
+}
+
+// Read and Filter Battery Voltage
+void updateBatteryVoltage() {
+  uint16_t raw_adc = analogRead(PIN_BATTERY_ADC);
+  float raw_pin_voltage = (raw_adc / ADC_MAX_COUNTS) * ADC_REF_VOLTAGE;
+  float instantaneous_battery_voltage = raw_pin_voltage * VOLTAGE_DIVIDER_RATIO;
+
+  // Exponential Low-Pass Filter (alpha = 0.15)
+  const float ALPHA = 0.15f;
+  filtered_battery_voltage = (ALPHA * instantaneous_battery_voltage) + ((1.0f - ALPHA) * filtered_battery_voltage);
+}
+
+// 100 Hz Core Motion Control Task
+void task_motion_control() {
+  // Execute open-loop motion ramp sequence based on uptime (8-second total loop)
+  uint32_t current_ms = millis();
+  uint32_t cycle = (current_ms / 2000) % 4;
+
+  switch (cycle) {
+    case 0: // Forward Drive
+      driveRobot(180, 180);
+      break;
+    case 1: // Reverse Drive
+      driveRobot(-180, -180);
+      break;
+    case 2: // Spin Turn Left
+      driveRobot(-150, 150);
+      break;
+    case 3: // Active Stop
+      driveRobot(0, 0);
+      break;
+  }
+}
+
+// 10 Hz Telemetry Logging Task
+void task_telemetry() {
+  updateBatteryVoltage();
+
+  // Output Key-Value formatted stream for Arduino Serial Plotter
+	Serial.printf(
+	  "L_Duty:%d,R_Duty:%d,V_Bat:%.2f,STBY:%d\n",
+	   left_command_duty,
+	   right_command_duty,
+	   filtered_battery_voltage,
+	   driver_enabled ? 1 : 0
+	);
+}
+
+// 1 Hz Heartbeat LED Task
+void task_heartbeat() {
+  heartbeat_state = !heartbeat_state;
+  digitalWrite(PIN_HEARTBEAT_LED, heartbeat_state ? HIGH : LOW);
+}
+
+void setup() {
+  pinMode(PIN_HEARTBEAT_LED, OUTPUT);
+  digitalWrite(PIN_HEARTBEAT_LED, LOW);
+
+  Serial.begin(115200);
+  delay(500);
+
+  Serial.println("[SYSTEM] Initializing Robot Hardware...");
+
+  if (!initMotorDriver()) {
+    Serial.println("[FATAL ERROR] Motor Driver Initialization Failed!");
+    while (true) {
+      digitalWrite(PIN_HEARTBEAT_LED, HIGH);
+      delay(100);
+      digitalWrite(PIN_HEARTBEAT_LED, LOW);
+      delay(100);
+    }
+  }
+
+  // Anchor scheduler timebases
+  uint32_t start_us = micros();
+  uint32_t start_ms = millis();
+  last_motion_time_us = start_us;
+  last_telemetry_time_ms = start_ms;
+  last_heartbeat_time_ms = start_ms;
+
+  Serial.println("[SYSTEM] Motor Driver & Open-Loop Motion Controller Running.");
+}
+
+void loop() {
+  uint32_t current_us = micros();
+  uint32_t current_ms = millis();
+
+  // 100 Hz Motion Control Task
+  if ((uint32_t)(current_us - last_motion_time_us) >= INTERVAL_MOTION_US) {
+    last_motion_time_us += INTERVAL_MOTION_US;
+    task_motion_control();
+  }
+
+  // 10 Hz Telemetry Task
+  if ((uint32_t)(current_ms - last_telemetry_time_ms) >= INTERVAL_TELEMETRY_MS) {
+    last_telemetry_time_ms += INTERVAL_TELEMETRY_MS;
+    task_telemetry();
+  }
+
+  // 1 Hz Heartbeat Task
+  if ((uint32_t)(current_ms - last_heartbeat_time_ms) >= INTERVAL_HEARTBEAT_MS) {
+    last_heartbeat_time_ms += INTERVAL_HEARTBEAT_MS;
+    task_heartbeat();
+  }
+}
+```
+
+### Calibration
+
+#### Pre-power Check
+
+- With battery disconnected, measure continuity between logic, GND, motor power GND, and ESP32 GND. Resistance must read $< 0.5 \Omega$
+
+#### Logic and Motor Rail 
+
+- Connect battery power. Measure Buck 1 output ($5 V \pm 0.05 V$) on ESP32 `VIN`
+- Measure Buck 2 output ($6 V \pm 0.1 V$) on the motor driver `VM` power terminals
+
+#### Open-Loop Motor Terminal Probing
+
+- Measure DC voltage across `OUT1` and `OUT2` during Forward motion. Meter must read $+4.5 V$ to $+5.8 V$ depending on duty cycle
+- Measure DC voltage across `OUT1` and `OUT2` during Reverse motion. Meter must read $-4.5 V$ to $-5.8 V$ depending on duty cycle
+
+### Debugging
+
+#### Probe STBY Pin Voltage
+
+- If the meter reads $0 V$, driver is in Standby mode. Check GPIO 5 wiring and initialization code
+- If it reads $3.3 V$, standby logic is OK. Proceed to next step
+
+#### Probe Driver VM and GND Terminals
+
+- If the meter reads $0 V$, check 2A inline fuse and Buck Regulator 2 output
+- If the meter read $6 V$, power rail is OK. Proceed to next step
+
+#### Probe AIN1, AIN2, and PWMA Pins
+
+- If inputs are frozen LOW, check GPIO initialization and pin assignment configuration in firmware
+- If logic is toggling but OUT1 or OUT2 gives $0 V$. the motor driver IC is damaged and requires replacement
+
+## Reference
+
+- [Espressif Systems, _ESP32 Technical Reference Manual: LED Control (LEDC) Peripheral_, 2023](https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html)
+- [Texas Instruments, _Motor Drivers Architecture and H-Bridge Applications_, Application Report SLVA130, 2021](https://www.ti.com/product-category/motor-drivers/overview.html)
+- [- Elecia White, _Making Embedded Systems: Design Patterns for Great Software_, O'Reilly Media, 2011](https://github.com/VaheDanielyan/UsefulBooks/blob/master/Elecia%20White%20-%20O'Reilly%20Making%20Embedded%20Systems%20(2011).pdf)
+- [Kevin M. Lynch and Frank C. Park, _Modern Robotics: Mechanics, Planning, and Control_, Cambridge University Press, 2017](https://hades.mech.northwestern.edu/images/7/7f/MR.pdf)

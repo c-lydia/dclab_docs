@@ -1,4 +1,5 @@
-By: >_ terminal gremlin (c-lydia ^-^)
+By: >_ terminal gremlin (c-lydia ^-^)  
+Chheng Lydiya
 ## Why Control System needs Electronics
 
 Microcontrollers operate strictly as low-power digital logic devices. Their internal silicon consists of microscopic CMOS (Complementary Metal-Oxide Semiconductor) Transistors optimized for digital computation, state evaluation, and high-speed switching between logic LOW ($0 V$) and HIGH ($3.3 V$). They cannot directly power actuators.
