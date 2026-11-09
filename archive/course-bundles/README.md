@@ -9,3 +9,6 @@ Use [the current course folders](../../courses/README.md) for teaching and editi
 | [power_architecture_and_adc.zip](power_architecture_and_adc.zip) | Different slide builder, PPTX, and slide PDF |
 
 The old `dc_motor_drive.zip` and `power_architecture_and_adc_v2.zip` were removed after verifying that every file in each archive exactly matched an unpacked course file. Git history retains the removed archives.
+
+[Back to current courses](../../courses/README.md) ·
+[Back to the repository guide](../../README.md)
