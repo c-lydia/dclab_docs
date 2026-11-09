@@ -5,28 +5,36 @@ embedded systems, electronics, and control.
 
 ## Start here
 
-- Courses (courses/README.md): microcontrollers, PWM, power systems,
-  motor control, and embedded software.
-- Notebooks (notebooks/README.md): practical Linux and ROS 2 exercises.
-- Projects (projects/README.md): control-system roadmap and STM32 setup.
-- Research (research/README.md): localization, LiDAR, and robotics references.
+- Electronics and embedded control: follow the courses (courses/README.md).
+- Linux and ROS 2: work through the notebooks (notebooks/README.md).
+- Project setup: read the technical guides (projects/README.md).
+- Localization and LiDAR: explore the research notes (research/README.md).
 
-## Resources
+## Repository layout
 
-| Folder | Contents |
+| Directory | Contents |
 |---|---|
-| courses (courses/) | Lesson notes, diagrams, slides, and PDF exports |
-| notebooks (notebooks/) | Jupyter notebooks and practical exercises |
-| projects (projects/) | Technical guides and project documentation |
-| research (research/) | Research notes, papers, and reference materials |
-| hardware (hardware/schematics/) | KiCad robot schematics |
+| courses (courses/README.md) | Lesson notes, diagrams, slides, and PDF exports |
+| notebooks (notebooks/README.md) | Jupyter notebooks and practical exercises |
+| projects (projects/README.md) | Control-system roadmap and toolchain setup |
+| research (research/README.md) | Research notes, papers, and reference materials |
+| hardware/schematics (hardware/schematics/) | KiCad robot project and schematic |
 | templates (templates/README.md) | Teaching slides and technical note templates |
-| assets (assets/diagram-libraries/) | Reusable Excalidraw diagram libraries |
-| archive (archive/course-bundles/README.md) | Older course bundles |
+| assets/diagram-libraries (assets/diagram-libraries/) | Reusable Excalidraw libraries |
+| archive/course-bundles (archive/course-bundles/README.md) | Historical course bundles |
 
-Markdown files contain editable notes. PPTX/POTX files contain editable
-slides and templates. PDFs are exports for reading and printing.
+## Using the materials
+
+- Read Markdown files directly on GitHub.
+- Download PDFs for reading or printing.
+- Open PPTX/POTX files in PowerPoint or LibreOffice to edit slides.
+- Open notebooks in Jupyter or follow their Colab links.
+- Open the hardware project in KiCad.
+
+Use the current course folders for lessons and exercises. Archived bundles
+may contain older versions.
 
 ## Contributing
 
-See CONTRIBUTING.md (CONTRIBUTING.md) for how to add or update materials.
+Corrections, clearer explanations, and new lab exercises are welcome.
+See CONTRIBUTING.md (CONTRIBUTING.md) for file organization and review steps.
