@@ -1,28 +1,49 @@
-# Maintaining the documentation
+# Contributing to DCLab Documentation
 
-## File placement
+Contributions should support the lab's teaching, research, or robotics projects.
 
-- Put course notes and their images, slides, and exports together under `courses/<topic>/`.
-- Put project plans and toolchain guides under `projects/`.
-- Put research notes and papers under `research/`; localization papers belong in `research/localization/reference/`.
-- Put Jupyter notebooks under `notebooks/` and update their Colab links after a move.
-- Keep reusable slide/note templates under `templates/` and Excalidraw libraries under `assets/diagram-libraries/`.
-- Keep historical bundles under `archive/` only when they contain material not represented by current files.
+## Where files belong
 
-Use lowercase folder names with hyphens between words. Existing document titles remain descriptive. Use relative Markdown links and images so GitHub renders them; percent-encode spaces and parentheses in link destinations. Keep Python caches, virtual environments, editor lock files, KiCad local state, and Underlight sync metadata out of Git.
+| Material | Location |
+|---|---|
+| Lessons, slides, and course diagrams | courses/<topic>/ |
+| Technical project guides and setup instructions | projects/ |
+| Research notes and reference papers | research/ |
+| Jupyter notebooks | notebooks/ |
+| Robot schematics | hardware/schematics/ |
+| Reusable teaching and technical note templates | templates/ |
+| Excalidraw libraries | assets/diagram-libraries/ |
+| Historical course bundles | archive/course-bundles/ |
 
-## Publishing
+Keep each lesson's source files and supporting images together.
 
-Follow [PORTFOLIO.md](PORTFOLIO.md) for automatic publication of course and project notes. README/index files, templates, research, archives, and notebooks are excluded from the feed. Existing portfolio path aliases in the exporter preserve article URLs across this folder reorganization; retain those aliases.
+## Writing and naming
 
-## Checks
+- Use descriptive filenames.
+- Use lowercase folder names with hyphens between words.
+- Explain prerequisites before presenting an exercise.
+- Include units, assumptions, and hardware or software versions where relevant.
+- Use relative Markdown links for files within this repository.
+- Preserve author credits and cite external sources.
+- Keep personal plans, contact details, and private workspace files outside
+  this repository.
 
-Run from the repository root:
+## Before submitting
 
-```sh
-python3 -m unittest discover -s .github/scripts -p 'test_*.py'
-python3 .github/scripts/export_portfolio_articles.py /tmp/portfolio-articles.json
-git diff --check
-```
+- Check that links and images open correctly on GitHub.
+- Update the relevant README when adding, moving, or removing files.
+- Update notebook Colab links when moving notebooks.
+- Check that example commands match the documented setup.
+- Refresh PDF and slide exports when their source material changes.
+- Exclude caches, virtual environments, editor settings, and temporary files.
 
-Stage new or moved files before exporting: the exporter selects files using Git's tracked-file list. Before committing a move, check relative links, notebook Colab badges, and portfolio output. Review PDFs/slides separately when regenerating them; editing Markdown does not regenerate those exports.
+Editing Markdown does not automatically regenerate PDFs or slides.
+
+## Submitting changes
+
+1. Create a branch for your changes.
+2. Edit the relevant files and review the diff.
+3. Commit with a message describing what changed.
+4. Open a pull request explaining the change and how you checked it.
+
+You can edit through GitHub, github.dev, or a local checkout.
