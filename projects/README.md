@@ -1,9 +1,22 @@
-# Projects and toolchains
+# Projects and Technical Guides
 
-- [Control System](Control%20System.md)
-- [Independent Engineering Practice — Launch Plan](Independent%20Engineering%20Practice%20%E2%80%94%20Launch%20Plan.md)
-- [STM32 Toolchain Installation](STM32%20Toolchain%20Installation.md)
+Setup instructions and planning material for DCLab robotics projects.
 
-[Control System.html](Control%20System.html) is an HTML export of the roadmap. Edit the Markdown source when updating the roadmap and refresh the export when needed.
+## Guides
 
-[Course materials](../courses/README.md) · [Research](../research/README.md)
+| Guide | Purpose |
+|---|---|
+| Control System (Control%20System.md) | Course roadmap and control-system topics |
+| STM32 Toolchain Installation (STM32%20Toolchain%20Installation.md) | STM32 development and programming tools |
+
+Control System.html (Control%20System.html) is an HTML export of the roadmap.
+Update the Markdown source first, then refresh the export when needed.
+
+## Related material
+
+- Courses (../courses/README.md)
+- Practical notebooks (../notebooks/README.md)
+- Research notes (../research/README.md)
+- Robot schematics (../hardware/schematics/)
+
+Back to the repository guide (../README.md)
