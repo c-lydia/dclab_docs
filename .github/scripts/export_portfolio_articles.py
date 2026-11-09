@@ -1,4 +1,4 @@
-"""Export committed Knowledge/Projects Markdown as a public portfolio feed."""
+"""Export committed course and project Markdown as a public portfolio feed."""
 import hashlib
 import json
 import posixpath
@@ -10,7 +10,21 @@ from urllib.parse import quote, unquote, urlsplit
 
 REPO = 'c-lydia/dclab_docs'
 SITE = 'https://chheng-lydiya-portfolio.vercel.app'
-ROOTS = ('04 Knowledge/', '02 Projects/')
+ROOTS = ('courses/', 'projects/')
+# Keep published IDs and URLs stable across the repository's folder cleanup.
+LEGACY_ROOTS = {
+    'projects/': '02 Projects/',
+    'courses/dc-motor-drive/': '04 Knowledge/dclab/dc_motor_drive/',
+    'courses/embedded-software/': '04 Knowledge/dclab/embedded_software/',
+    'courses/microcontrollers-and-pwm/': '04 Knowledge/dclab/mcu_and_pwm/',
+    'courses/power-architecture-and-adc/': '04 Knowledge/dclab/power_architecture_and_adc/',
+}
+
+def article_identity(path):
+    for current, previous in LEGACY_ROOTS.items():
+        if path.startswith(current):
+            return previous + path[len(current):]
+    return path
 
 def git(*args):
     return subprocess.check_output(['git', *args], text=True).strip()
@@ -23,6 +37,7 @@ def eligible(path):
             and Path(path).stem.lower() not in ('readme', 'index', 'untitled', 'agents'))
 
 def slug(path):
+    path = article_identity(path)
     title = re.sub(r'[^a-z0-9]+', '-', Path(path).stem.lower()).strip('-')[:90] or 'note'
     return f'dclab-{title}-{hashlib.sha256(path.encode()).hexdigest()[:8]}'
 
@@ -112,9 +127,9 @@ def build_feed():
         dates = git('log', '--follow', '--format=%cI', '--', path).splitlines()
         tags = [t.strip(' \"\'') for t in meta.get('tags', '').strip('[]').split(',') if t.strip()]
         articles.append({
-            'id': 'github:' + path, 'slug': slug(path), 'title': title,
+            'id': 'github:' + article_identity(path), 'slug': slug(path), 'title': title,
             'excerpt': meta.get('excerpt') or meta.get('summary') or excerpt(body),
-            'tags': tags or ['DCLab', 'Projects' if path.startswith('02 Projects/') else 'Knowledge'],
+            'tags': tags or ['DCLab', 'Projects' if path.startswith('projects/') else 'Knowledge'],
             'body': convert_links(body, path, files, docs, revision),
             'publishedAt': dates[-1] if dates else None, 'updatedAt': dates[0] if dates else None,
             'source': 'github', 'sourceUrl': f'https://github.com/{REPO}/blob/main/{quote(path)}',
@@ -126,4 +141,4 @@ if __name__ == '__main__':
     output = Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/portfolio-articles.json')
     feed = build_feed()
     output.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + '\n')
-    print(f'Exported {len(feed["articles"])} articles from committed Knowledge/Projects notes.')
+    print(f'Exported {len(feed["articles"])} articles from committed course/project notes.')

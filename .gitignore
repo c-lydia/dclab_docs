@@ -15,25 +15,19 @@ copilot/
 
 # Untitled/temp notes
 Untitled/
-"Untitled 1"/
-"Untitled 2"/
+Untitled 1/
+Untitled 2/
 Untitled.md
-
-# Underlight
-"Underlight Guide.ms"
-"Underlight Home.md"
 
 # External/aux folders
 Excalidraw/
 Notion/
-91 Attachments/
+assets/attachments/
 
 # Project-specific ignores
-02 Projects/embedded_software_for_control/
-02 Projects/introduction_to_mcu/
-02 Projects/sensing_and_signal/
-"02 Projects/Control System.md"
-"02 Projects/STM32 Toolchain Installation.md"
+projects/embedded_software_for_control/
+projects/introduction_to_mcu/
+projects/sensing_and_signal/
 
 # Misc
 *.log
@@ -54,5 +48,25 @@ Notion/
 .underlight-asset-skips.json
 
 # Nested repair and history repositories
-/04 Knowledge/.underlight-repair/
-/04 Knowledge/dclab/schematic_main/.history/
+**/.underlight-repair/
+/hardware/schematics/.history/
+
+# Python environments and generated caches
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local editor, office, and KiCad state
+*.swp
+*.swo
+.~lock.*#
+~$*
+*.kicad_prl
+*.lck
+
+# Local Underlight asset conflict reports
+.underlight-asset-conflicts.json

@@ -1,6 +1,6 @@
 # Publishing notes to the portfolio
 
-Markdown committed and pushed to `main` under `04 Knowledge/` or `02 Projects/` appears automatically in [the portfolio articles](https://chheng-lydiya-portfolio.vercel.app/#/articles).
+Markdown committed and pushed to `main` under `courses/` or `projects/` appears automatically in [the portfolio articles](https://chheng-lydiya-portfolio.vercel.app/#/articles).
 
 1. Write a `.md` note in either folder and add any diagrams to Git.
 2. Commit and push to `main` as usual.
@@ -8,7 +8,7 @@ Markdown committed and pushed to `main` under `04 Knowledge/` or `02 Projects/` 
 
 The workflow uses only committed files. Daily notes, Inbox, templates, root dashboards, application settings, notebooks, PDFs, README/index files and Excalidraw source Markdown are not published as articles. Images/PDFs linked from an included article remain accessible through their repository URLs. Do not put private material in the public repository.
 
-The filename supplies the title unless a top-level `# Title` is present. Creation/update dates come from Git history. Article URLs are based on the file path and remain stable while the note's content changes; renaming a file changes its URL. Deleting a note removes it from the next feed.
+The filename supplies the title unless a top-level `# Title` is present. Creation/update dates come from Git history. Article URLs are based on the file path and remain stable while the note's content changes. The exporter maps the reorganized course and project folders to their original paths to preserve existing article IDs and URLs. Renaming an individual note still changes its URL. Deleting a note removes it from the next feed.
 
 Optional frontmatter supports simple single-line values and comma-separated inline tags:
 
