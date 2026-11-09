@@ -1,11 +1,33 @@
-# Teaching and note templates
+# Teaching and Technical Note Templates
 
-## Slides
+Reusable templates for DCLab lessons, projects, and experiments.
 
-Start with [the slide-kit instructions](slides/START_HERE.txt). For directly selectable text and logos, open [DCLab_Crash_Course_Editable.pptx](slides/DCLab_Crash_Course_Editable.pptx); [EDITABLE_VERSION.txt](slides/EDITABLE_VERSION.txt) describes that variant. The original master-based templates are also retained.
+## Slide templates
 
-The [slides folder](slides) includes the PPTX/POTX sources, PDF previews, artwork, Python build scripts, and requirements.
+Start with the slide-kit instructions (slides/START_HERE.txt).
 
-## Notes
+- Editable slide deck (slides/DCLab_Crash_Course_Editable.pptx)
+- Editable PowerPoint template (slides/DCLab_Crash_Course_Editable.potx)
+- PDF preview (slides/DCLab_Crash_Course_Editable.pdf)
+- Editable-version instructions (slides/EDITABLE_VERSION.txt)
 
-The [notes folder](notes) contains templates for projects, experiments, research, concepts, daily notes, journals, and weekly reviews. In Obsidian, set the Templates folder to `templates/notes`. Personal daily notes and journals are optional local workspace content.
+The slides directory (slides/) also contains the original templates,
+artwork, build scripts, and Python requirements.
+
+Make a copy of a template before creating a lesson.
+
+## Technical note templates
+
+| Template | Use |
+|---|---|
+| Project (notes/Project.md) | Outcomes, constraints, decisions, and completion notes |
+| Experiment (notes/Experiment.md) | Setup, procedure, measurements, and conclusions |
+| Research (notes/Research.md) | Sources, methods, findings, and open questions |
+| Concept (notes/Concept.md) | Definitions, examples, and technical explanations |
+
+Copy a template into the appropriate project, research, or course folder
+and replace its placeholders.
+
+Back to the repository guide (../README.md)
+
+Commit these together with the message: Update documentation for the lab group.
