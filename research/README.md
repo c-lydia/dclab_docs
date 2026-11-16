@@ -20,6 +20,24 @@ Additional localization papers are in the
 
 ## Adding research notes
 
+### Selected portfolio studies
+
+- [FAST-LIO2 — Understanding LiDAR–Inertial Odometry](portfolio/FAST-LIO2%20Study.md)
+- [Localization with Livox MID-360 — A Study of the Options](portfolio/Livox%20MID-360%20Localization%20Study.md)
+
+These focused editions appear in the portfolio with the **Research & Study Notes** tag. They explain the reading and its limitations without robot-specific implementation code. Edit these editions to update their portfolio articles; the original localization notes remain outside the feed.
+
+Research Markdown must explicitly set `publish: true` in frontmatter to enter the feed. Setting `draft: true`, setting `publish: false`, or removing the opt-in excludes it on the next run. Reference folders (`reference/` and `references/`), PDFs, and README/index files are always excluded. Unfinished studies should stay without the opt-in.
+
+Commit and push changes to `main`; the **Publish portfolio articles** workflow refreshes the feed automatically. No portfolio deployment is needed. Check changes locally with:
+
+```sh
+python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+python3 .github/scripts/export_portfolio_articles.py /tmp/portfolio-articles.json
+```
+
+### Working notes
+
 Record the source, research question, assumptions, method, and findings.
 Distinguish published results from observations made during lab experiments.
 

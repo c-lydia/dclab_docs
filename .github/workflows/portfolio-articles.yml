@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0
       - name: Test exporter
         run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
-      - name: Export courses and projects
+      - name: Export courses, projects, and selected research
         run: python3 .github/scripts/export_portfolio_articles.py "$RUNNER_TEMP/portfolio-articles.json"
       - name: Publish feed
         env:

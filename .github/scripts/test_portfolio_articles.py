@@ -6,10 +6,34 @@ import export_portfolio_articles as exporter
 
 class FeedTests(unittest.TestCase):
     def test_only_publishable_folders(self):
-        for name in ['courses/topic/note.md', 'projects/Robot.md']:
+        for name in ['courses/topic/note.md', 'projects/Robot.md', 'research/portfolio/study.md']:
             self.assertTrue(exporter.eligible(name))
-        for name in ['01 Daily/day.md','templates/notes/Project.md','00 Inbox/draft.md','courses/img/drawing.excalidraw.md','projects/README.md','.obsidian/config.md','courses/.private/note.md','courses/notes.pdf','archive/course-bundles/old.md','research/note.md','guides/README.md','notebooks/README.md']:
+        for name in ['01 Daily/day.md','templates/notes/Project.md','00 Inbox/draft.md','courses/img/drawing.excalidraw.md','projects/README.md','.obsidian/config.md','courses/.private/note.md','courses/notes.pdf','archive/course-bundles/old.md','research/references/paper.md','research/localization/reference/paper.md','research/README.md','guides/README.md','notebooks/README.md']:
             self.assertFalse(exporter.eligible(name), name)
+
+    def test_research_requires_opt_in_and_respects_withdrawal(self):
+        study = 'research/portfolio/Study.md'
+        companion = 'research/portfolio/Companion.md'
+        contents = {
+            study: '---\npublish: true\ntitle: Focused study\n---\nSee [companion](Companion.md).',
+            companion: '---\npublish: true\n---\nCompanion study',
+            'research/localization/Integration.md': 'Robot-specific implementation',
+            'research/aerospace/Unfinished.md': 'Reading draft',
+            'research/references/Paper.md': '---\npublish: true\n---\nReference',
+            'research/Draft.md': '---\npublish: true\ndraft: true\n---\nDraft',
+        }
+        with patch.object(exporter, 'git', return_value='abc123'), patch.object(
+            exporter.subprocess, 'check_output', return_value='\0'.join(contents).encode()
+        ), patch.object(Path, 'read_text', autospec=True,
+                        side_effect=lambda p, **k: contents[str(p)]):
+            articles = exporter.build_feed()['articles']
+            self.assertEqual({a['id'] for a in articles}, {'github:' + study, 'github:' + companion})
+            article = next(a for a in articles if a['title'] == 'Focused study')
+            self.assertIn('Research & Study Notes', article['tags'])
+            self.assertIn('/#/articles/' + exporter.slug(companion), article['body'])
+            for frontmatter in ('', '---\npublish: false\n---\n', '---\npublish: true\ndraft: true\n---\n'):
+                contents[study] = frontmatter + 'Withdrawn study'
+                self.assertEqual([a['id'] for a in exporter.build_feed()['articles']], ['github:' + companion])
 
     def test_stable_distinct_slugs(self):
         self.assertNotEqual(exporter.slug('courses/a/Intro.md'), exporter.slug('courses/b/Intro.md'))
