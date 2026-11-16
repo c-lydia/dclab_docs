@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote, urlsplit
 
 REPO = 'c-lydia/dclab_docs'
+PUBLICATION_BRANCH = 'portfolio-publications'
 SITE = 'https://chheng-lydiya-portfolio.vercel.app'
 ROOTS = ('courses/', 'projects/', 'research/')
 # Keep published IDs and URLs stable across the repository's folder cleanup.
@@ -135,7 +136,7 @@ def build_feed():
             'tags': tags or ['DCLab', 'Research & Study Notes' if path.startswith('research/') else 'Projects' if path.startswith('projects/') else 'Knowledge'],
             'body': convert_links(body, path, files, docs, revision),
             'publishedAt': dates[-1] if dates else None, 'updatedAt': dates[0] if dates else None,
-            'source': 'github', 'sourceUrl': f'https://github.com/{REPO}/blob/main/{quote(path)}',
+            'source': 'github', 'sourceUrl': f'https://github.com/{REPO}/blob/{PUBLICATION_BRANCH}/{quote(path)}',
         })
     articles.sort(key=lambda a: a['updatedAt'] or '', reverse=True)
     return {'version': 1, 'repository': REPO, 'revision': revision, 'articles': articles}

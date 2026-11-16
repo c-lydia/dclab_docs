@@ -30,6 +30,8 @@ class FeedTests(unittest.TestCase):
             self.assertEqual({a['id'] for a in articles}, {'github:' + study, 'github:' + companion})
             article = next(a for a in articles if a['title'] == 'Focused study')
             self.assertIn('Research & Study Notes', article['tags'])
+            self.assertTrue(article['sourceUrl'].startswith(
+                'https://github.com/c-lydia/dclab_docs/blob/portfolio-publications/'))
             self.assertIn('/#/articles/' + exporter.slug(companion), article['body'])
             for frontmatter in ('', '---\npublish: false\n---\n', '---\npublish: true\ndraft: true\n---\n'):
                 contents[study] = frontmatter + 'Withdrawn study'

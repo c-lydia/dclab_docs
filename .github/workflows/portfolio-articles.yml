@@ -1,7 +1,7 @@
 name: Publish portfolio articles
 on:
   push:
-    branches: [main]
+    branches: [portfolio-publications]
   workflow_dispatch:
 permissions:
   contents: write
@@ -10,6 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
+    if: github.ref == 'refs/heads/portfolio-publications'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

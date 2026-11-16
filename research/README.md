@@ -29,7 +29,7 @@ These focused editions appear in the portfolio with the **Research & Study Notes
 
 Research Markdown must explicitly set `publish: true` in frontmatter to enter the feed. Setting `draft: true`, setting `publish: false`, or removing the opt-in excludes it on the next run. Reference folders (`reference/` and `references/`), PDFs, and README/index files are always excluded. Unfinished studies should stay without the opt-in.
 
-Commit and push changes to `main`; the **Publish portfolio articles** workflow refreshes the feed automatically. No portfolio deployment is needed. Check changes locally with:
+Commit and push publication changes to `portfolio-publications`; the **Publish portfolio articles** workflow writes `articles.json` on that same branch. The live portfolio reads that branch, and source links open its Markdown files. Do not merge portfolio publication changes into `main`. No portfolio deployment is needed for later article edits. The old `portfolio-articles` feed is no longer the website's source. Check changes locally with:
 
 ```sh
 python3 -m unittest discover -s .github/scripts -p 'test_*.py'

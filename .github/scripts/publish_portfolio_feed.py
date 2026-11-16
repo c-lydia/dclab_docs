@@ -8,7 +8,10 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 repository = os.environ['GITHUB_REPOSITORY']
-branch = 'portfolio-articles'
+branch = 'portfolio-publications'
+
+if os.environ.get('GITHUB_REF') != f'refs/heads/{branch}':
+    raise SystemExit(f'Portfolio publication is only allowed from {branch}.')
 
 def api(path, method='GET', payload=None):
     request = Request(f'https://api.github.com/repos/{repository}/{path}',
