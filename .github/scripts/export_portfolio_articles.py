@@ -1,4 +1,4 @@
-"""Export course/project notes and explicitly published research studies."""
+"""Export committed course and project Markdown as a public portfolio feed."""
 import hashlib
 import json
 import posixpath
@@ -10,7 +10,7 @@ from urllib.parse import quote, unquote, urlsplit
 
 REPO = 'c-lydia/dclab_docs'
 SITE = 'https://chheng-lydiya-portfolio.vercel.app'
-ROOTS = ('courses/', 'projects/', 'research/')
+ROOTS = ('courses/', 'projects/')
 # Keep published IDs and URLs stable across the repository's folder cleanup.
 LEGACY_ROOTS = {
     'projects/': '02 Projects/',
@@ -33,7 +33,7 @@ def eligible(path):
     parts = Path(path).parts
     return (path.startswith(ROOTS) and path.lower().endswith('.md')
             and not path.lower().endswith('.excalidraw.md')
-            and not any(p.startswith('.') or p.lower() in ('img', 'images', 'attachments', 'reference', 'references') for p in parts)
+            and not any(p.startswith('.') or p.lower() in ('img', 'images', 'attachments') for p in parts)
             and Path(path).stem.lower() not in ('readme', 'index', 'untitled', 'agents'))
 
 def slug(path):
@@ -115,9 +115,6 @@ def build_feed():
         if not eligible(path):
             continue
         meta, body = metadata(Path(path).read_text(encoding='utf-8-sig').replace('\r\n', '\n'))
-        # Research is curated: an ordinary reading note never publishes implicitly.
-        if path.startswith('research/') and meta.get('publish', '').lower() != 'true':
-            continue
         if meta.get('draft', '').lower() == 'true' or meta.get('publish', '').lower() == 'false' or not body.strip():
             continue
         docs[path] = (meta, body)
@@ -132,7 +129,7 @@ def build_feed():
         articles.append({
             'id': 'github:' + article_identity(path), 'slug': slug(path), 'title': title,
             'excerpt': meta.get('excerpt') or meta.get('summary') or excerpt(body),
-            'tags': tags or ['DCLab', 'Research & Study Notes' if path.startswith('research/') else 'Projects' if path.startswith('projects/') else 'Knowledge'],
+            'tags': tags or ['DCLab', 'Projects' if path.startswith('projects/') else 'Knowledge'],
             'body': convert_links(body, path, files, docs, revision),
             'publishedAt': dates[-1] if dates else None, 'updatedAt': dates[0] if dates else None,
             'source': 'github', 'sourceUrl': f'https://github.com/{REPO}/blob/main/{quote(path)}',
@@ -144,4 +141,4 @@ if __name__ == '__main__':
     output = Path(sys.argv[1] if len(sys.argv) > 1 else '/tmp/portfolio-articles.json')
     feed = build_feed()
     output.write_text(json.dumps(feed, ensure_ascii=False, indent=2) + '\n')
-    print(f'Exported {len(feed["articles"])} articles from course/project notes and opted-in research studies.')
+    print(f'Exported {len(feed["articles"])} articles from committed course/project notes.')
